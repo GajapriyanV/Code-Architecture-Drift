@@ -1,0 +1,80 @@
+# Sample Architecture Rules for Rails Application
+# This file defines the architectural constraints and patterns
+
+layers:
+  - name: controllers
+    patterns: ["app/controllers/**/*.rb"]
+    description: "HTTP request handlers, should be thin and delegate to services"
+  
+  - name: services
+    patterns: ["app/services/**/*.rb"]
+    description: "Business logic layer, orchestrates operations"
+  
+  - name: repositories
+    patterns: ["app/repositories/**/*.rb"]
+    description: "Data access layer, abstracts database operations"
+  
+  - name: models
+    patterns: ["app/models/**/*.rb"]
+    description: "ActiveRecord models, should contain minimal business logic"
+  
+  - name: frontend
+    patterns: ["frontend/**/*.{ts,tsx}", "app/javascript/**/*.{ts,tsx}"]
+    description: "Frontend components and utilities"
+
+# Forbidden direct dependencies between layers
+forbidden_dependencies:
+  - { from: controllers, to: repositories }
+  - { from: controllers, to: models }
+  - { from: frontend, to: models }
+  - { from: frontend, to: repositories }
+
+# Required routing through intermediate layers
+must_route_via:
+  - { from: controllers, to: repositories, via: services }
+  - { from: frontend, to: models, via: services }
+
+# Disallowed API usage in specific layers
+disallowed_apis:
+  - { 
+      layer: controllers, 
+      patterns: [
+        "ActiveRecord::Base", 
+        "\\.where\\(", 
+        "\\.find\\(", 
+        "\\.create\\(", 
+        "\\.update\\(", 
+        "\\.destroy\\("
+      ],
+      reason: "Controllers should not directly access the database"
+    }
+  
+  - { 
+      layer: models, 
+      patterns: [
+        "HTTParty", 
+        "Net::HTTP", 
+        "Faraday"
+      ],
+      reason: "Models should not make HTTP requests"
+    }
+
+# Layer aliases for convenience
+aliases:
+  ctrl: controllers
+  svc: services
+  repo: repositories
+  mdl: models
+  fe: frontend
+
+# Custom rules for specific patterns
+custom_rules:
+  - name: "no_global_state"
+    pattern: "class.*<.*Singleton|@@|$global"
+    message: "Avoid global state and singletons"
+    severity: "medium"
+  
+  - name: "no_hardcoded_paths"
+    pattern: "/home/|/var/|C:\\\\|/tmp/"
+    message: "Avoid hardcoded file system paths"
+    severity: "low"

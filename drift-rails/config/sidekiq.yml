@@ -1,0 +1,11 @@
+:concurrency: 5
+:queues:
+  - default
+  - scans
+
+:timeout: 25
+
+:logfile: log/sidekiq.log
+:pidfile: tmp/pids/sidekiq.pid
+
+:environment: development

@@ -1,0 +1,31 @@
+layers:
+  - name: controllers
+    patterns: ["*/controllers/*.rb", "*/controllers/*/*.rb"]
+  - name: services
+    patterns: ["*/services/*.rb", "*/services/*/*.rb"]
+  - name: models
+    patterns: ["*/models/*.rb", "*/models/*/*.rb"]
+  - name: graphql
+    patterns: ["*/graphql/*.rb", "*/graphql/*/*.rb", "*/graphql/*/*/*.rb"]
+  - name: jobs
+    patterns: ["*/jobs/*.rb", "*/jobs/*/*.rb"]
+  - name: frontend
+    patterns: ["*/app/*.{ts,tsx}", "*/app/*/*.{ts,tsx}", "*/app/*/*/*.{ts,tsx}"]
+  - name: analysis
+    patterns: ["*/analysis/*.py", "*/analysis/*/*.py"]
+
+forbidden_dependencies:
+  - { from: controllers, to: models }
+  - { from: frontend, to: models }
+
+must_route_via:
+  - { from: controllers, to: models, via: services }
+
+disallowed_apis:
+  - { layer: controllers, patterns: ["ActiveRecord::Base", "\\.where\\(", "\\.find\\(", "\\.create\\(", "\\.update\\(", "\\.destroy\\("] }
+  - { layer: services, patterns: ["ActiveRecord::Base"] }
+
+aliases:
+  svc: service
+  repo: repository
+  ctrl: controller

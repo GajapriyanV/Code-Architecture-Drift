@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: drift_rails_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Add a sample Rails app for testing
+  sample-rails:
+    build:
+      context: ./sample-rails-app
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/sample_rails_development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./sample-rails-app:/app
+      - /app/tmp
+      - /app/log
+    profiles:
+      - sample
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: drift-detector-network

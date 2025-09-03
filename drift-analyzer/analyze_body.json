@@ -1,0 +1,1 @@
+{ git:{repo_url:https://github.com/sinatra/sinatra.git,ref:main,token:null},rules:{layers:[],forbidden_dependencies:[],must_route_via:[],disallowed_apis:[]},mode:full}
