@@ -82,6 +82,8 @@ if ($Setup -and -not $hasNodeModules) {
 $env:BACKEND_URL = $backendUrl
 # Enable demo mode if explicitly requested or when backend is skipped
 if ($SkipBackend -or $Demo) { $env:NEXT_PUBLIC_DEMO_MODE = 'true' } else { $env:NEXT_PUBLIC_DEMO_MODE = 'false' }
+# Provide analyzer URL to the Next.js API proxy (FastAPI default 8000)
+if (-not $env:ANALYZER_URL) { $env:ANALYZER_URL = 'http://127.0.0.1:8000' }
 $args = "run dev -- -p $FrontendPort -H $BindHost"
 $nextProc = Start-Process -FilePath 'npm' -ArgumentList $args -WorkingDirectory $webDir -PassThru -WindowStyle Minimized
 
