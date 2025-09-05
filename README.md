@@ -258,6 +258,71 @@ LOG_LEVEL=debug uvicorn main:app --reload --port 8000
 ### Frontend Routes
 
 - `/` - Home page with overview
+- `/api/status` - Frontend health JSON
+- `/api/analyze` - Proxy to analyzer (FastAPI)
+- `/simple` - Minimal test page
+- `/hello.html` - Static file served by Next.js
+
+## Unified Dev Workflow (Analyzer + Frontend)
+
+For a streamlined local setup without Rails/GraphQL, you can now run the FastAPI analyzer and the Next.js frontend together.
+
+Quick start (PowerShell on Windows)
+
+1) Start both services
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/dev-app.ps1
+```
+
+This will:
+
+- Start FastAPI analyzer on `http://127.0.0.1:8000` (installs Python deps if needed)
+- Start Next.js frontend on `http://localhost:3002` and set `ANALYZER_URL` for the proxy
+- Open the browser
+
+Options:
+
+- `-FrontendPort 3002` — change frontend port
+- `-AnalyzerPort 8000` — change analyzer port
+- `-BindHost '::'` — bind frontend to IPv6 so `localhost` works reliably; use `'127.0.0.1'` for IPv4 only
+- `-Setup:$false` — skip package installs
+
+2) Stop both services
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/stop-app.ps1
+```
+
+Analyzer proxy contract
+
+- Frontend posts to `/api/analyze`, which forwards to `${ANALYZER_URL}/analyze`.
+- Example payload the UI sends:
+
+```
+{
+  "git": { "repo_url": "https://github.com/you/sample-rails.git", "ref": "main" },
+  "rules": {},
+  "rules_yaml": "layers:\n  - name: controllers\n    patterns: ['app/controllers/**/*.rb']\n...",
+  "mode": "full"
+}
+```
+
+- Expected response (subset):
+
+```
+{
+  "metrics": { "drift_score": 0.25 },
+  "nodes": [ { "id": "controllers/users_controller.rb", "label": "users_controller.rb", "layer": "controllers" } ],
+  "edges": [ { "from": "controllers/users_controller.rb", "to": "repositories/user_repository.rb", "edge_type": "call" } ],
+  "violations": [ { "ruleCode": "FORBIDDEN_DEP", "details": "controllers/users_controller.rb → repositories/user_repository.rb" } ]
+}
+```
+
+Notes
+
+- If the analyzer isn’t reachable, `/api/analyze` returns a small demo payload so the UI stays functional.
+- The graph renderer highlights violation edges in red and is resilient to updates/unmounts.
 - `/projects` - List all projects
 - `/projects/[id]` - Project detail with drift analysis
 
